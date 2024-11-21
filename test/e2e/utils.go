@@ -637,8 +637,8 @@ func getPurgeLocalSnapstoreJob(storeContainer, storePrefix string) *batchv1.Job 
 			Containers: []corev1.Container{
 				{
 					Name:    "infra",
-					Image:   "ubuntu:23.10",
-					Command: []string{"/bin/bash"},
+					Image:   "alpine:latest",
+					Command: []string{"/bin/sh"},
 					Args: []string{"-c",
 						fmt.Sprintf("rm -rf /host-dir-etc/gardener/local-backupbuckets/%s/%s/*", storeContainer, storePrefix),
 					},
@@ -835,9 +835,10 @@ func etcdZeroDownTimeValidatorJob(etcdSvc, testName string, tls *v1alpha1.TLSCon
 			Containers: []corev1.Container{
 				{
 					Name:    fmt.Sprintf("etcd-zero-down-time-validator-%s", testName),
-					Image:   "alpine/curl",
-					Command: []string{"/bin/sh", "-c"},
-					Args:    []string{generateHealthCheckScript(etcdSvc)},
+					Image:   "alpine:latest",
+					Command: []string{"/bin/sh"},
+					Args: []string{"-c",
+						"apk update && apk add curl \n" + generateHealthCheckScript(etcdSvc)},
 					VolumeMounts: []corev1.VolumeMount{
 						{MountPath: "/var/etcd/ssl/ca", Name: "client-url-ca-etcd"},
 						{MountPath: "/var/etcd/ssl/server", Name: "client-url-etcd-server-tls"},
@@ -919,7 +920,9 @@ func getDebugPod(etcd *v1alpha1.Etcd) *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:  debugPodContainerName,
-					Image: "nginx",
+					Image: "alpine:latest",
+					Command: []string{"/bin/sh"},
+					Args: []string{"-c", "apk add curl && sleep infinity"},
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							MountPath: "/var/etcd/ssl/ca",
