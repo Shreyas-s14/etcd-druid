@@ -164,6 +164,7 @@ func (cfg *Config) captureFeatureActivations() {
 // Validate validates the controller manager config.
 func (cfg *Config) Validate() error {
 	if err := utils.ShouldBeOneOfAllowedValues("ResourceLock", getAllowedLeaderElectionResourceLocks(), cfg.LeaderElection.ResourceLock); err != nil {
+		fmt.Println("The error is here, 167")
 		return err
 	}
 

@@ -5,7 +5,9 @@
 package webhook
 
 import (
+	"fmt"
 	"github.com/gardener/etcd-druid/internal/webhook/etcdcomponents"
+	"github.com/gardener/etcd-druid/internal/webhook/validation"
 
 	"golang.org/x/exp/slog"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -23,7 +25,27 @@ func Register(mgr ctrl.Manager, config *Config) error {
 			return err
 		}
 		slog.Info("Registering EtcdComponents Webhook with manager")
-		return etcdComponentsWebhook.RegisterWithManager(mgr)
+		// return etcdComponentsWebhook.RegisterWithManager(mgr)
+		if err := etcdComponentsWebhook.RegisterWithManager(mgr); err != nil {
+			return err
+		}
+	}
+	// Register Validation webhook with the manager.
+	if config.Validation.Enabled {
+		validationWebhook, err := validation.NewHandler(
+			mgr,
+			config.Validation,
+		)
+		if err != nil {
+			fmt.Println("The error is here, 40, register_manager")
+			return err
+		}
+		slog.Info("Registering Validation Webhook with manager")
+		// return validationWebhook.RegisterWithManager(mgr)
+		if err := validationWebhook.RegisterWithManager(mgr); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }
