@@ -5,14 +5,16 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"runtime"
+
 	druidmgr "github.com/gardener/etcd-druid/internal/manager"
 	"github.com/gardener/etcd-druid/internal/utils"
 	"github.com/gardener/etcd-druid/internal/version"
 	"github.com/go-logr/logr"
 	flag "github.com/spf13/pflag"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"os"
-	"runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	// +kubebuilder:scaffold:imports
 )
@@ -20,6 +22,7 @@ import (
 var logger = ctrl.Log.WithName("druid")
 
 func main() {
+	fmt.Println("hello world")
 	ctx := ctrl.SetupSignalHandler()
 	ctrl.SetLogger(utils.MustNewLogger(false, utils.LogFormatJSON))
 	printVersionInfo()
