@@ -18,16 +18,16 @@ import (
 )
 
 const ( // TODO Decide the required flags (if any)
-	enableValidationWebhookFlagName	= "enable-validation-webhook"
-	defaultEnableValidationWebhook	    = false
+	enableValidationWebhookFlagName = "enable-validation-webhook"
+	defaultEnableValidationWebhook  = true
 )
 
-type Config struct { // only enabled for now. TOBEADDED: Sevice account List 
+type Config struct { // only enabled for now. TOBEADDED: Sevice account List
 	Enabled bool
 }
 
 func InitFromFlags(fs *flag.FlagSet, cfg *Config) {
 	fmt.Println("Reached HERE") // getting reached
 	fs.BoolVar(&cfg.Enabled, enableValidationWebhookFlagName, defaultEnableValidationWebhook,
-		"Enable the Validation Webhook to ensure resource changes conform to desired criteria.")	
+		"Enable the Validation Webhook to ensure resource changes conform to desired criteria.")
 }

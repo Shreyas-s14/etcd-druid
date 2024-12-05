@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gardener/etcd-druid/api/v1alpha1"
-	"github.com/gardener/etcd-druid/api/validation"
+	// "github.com/gardener/etcd-druid/api/validation"
 
 	"github.com/onsi/gomega/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

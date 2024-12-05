@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -48,6 +49,7 @@ func InitializeManager(config *Config) (ctrl.Manager, error) {
 	if err = druidcontroller.Register(mgr, config.Controllers); err != nil {
 		return nil, err
 	}
+	fmt.Println("CALLING REGISTER FOR WEBHOOKS")
 	if err = druidwebhook.Register(mgr, config.Webhooks); err != nil {
 		return nil, err
 	}

@@ -152,7 +152,7 @@ webhooks:
         port: {{ .Values.controllerManager.server.webhook.port }}
     failurePolicy: Fail #Change to Fail
     matchPolicy: Exact
-    name: v1alpha1.druid.gardener.cloud #validation.v1alpha1.druid.gardener.cloud
+    name: validate.webhooks.druid.gardener.cloud #validation.v1alpha1.druid.gardener.cloud
     namespaceSelector: {}
     rules:
       - apiGroups:

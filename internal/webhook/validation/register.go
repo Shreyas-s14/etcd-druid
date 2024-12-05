@@ -25,11 +25,11 @@ const (
 )
 
 func (h *Handler) RegisterWithManager(mgr manager.Manager) error {
-	fmt.Println("Hi")
 	webhook := &admission.Webhook{
-		Handler:	  h, // TODO: IMplement Handle in handler.go
+		Handler:      h, // TODO: IMplement Handle in handler.go
 		RecoverPanic: true,
 	}
 	mgr.GetWebhookServer().Register(webhookPath, webhook)
+	fmt.Println("REGISTERED THE WEBHOOK WITH THE MANAGER")
 	return nil
 }

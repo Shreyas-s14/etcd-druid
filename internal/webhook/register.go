@@ -30,6 +30,7 @@ func Register(mgr ctrl.Manager, config *Config) error {
 			return err
 		}
 	}
+	fmt.Println("REGISTERED COMPONENTS")
 	// Register Validation webhook with the manager.
 	if config.Validation.Enabled {
 		validationWebhook, err := validation.NewHandler(
@@ -45,7 +46,7 @@ func Register(mgr ctrl.Manager, config *Config) error {
 		if err := validationWebhook.RegisterWithManager(mgr); err != nil {
 			return err
 		}
-
+		fmt.Println("REGISTERED VALIDATE")
 	}
 	return nil
 }
