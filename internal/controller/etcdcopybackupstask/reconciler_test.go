@@ -164,12 +164,12 @@ var _ = Describe("EtcdCopyBackupsTaskController", func() {
 				imageVector: imagevector.ImageVector{
 					&imagevector.ImageSource{
 						Name:       common.ImageKeyEtcdBackupRestore,
-						Repository: "test-repo",
+						Repository: ptr.To("test-repo"),
 						Tag:        ptr.To("etcd-test-tag"),
 					},
 					&imagevector.ImageSource{
 						Name:       common.ImageKeyAlpine,
-						Repository: "test-repo",
+						Repository: ptr.To("test-repo"),
 						Tag:        ptr.To("init-container-test-tag"),
 					},
 				},
@@ -460,7 +460,7 @@ var _ = Describe("EtcdCopyBackupsTaskController", func() {
 				})
 
 				It("should create the correct volume mounts", func() {
-					volumeMounts := createVolumeMountsFromStore(storeSpec, provider, volumeMountPrefix, false)
+					volumeMounts := createVolumeMountsFromStore(storeSpec, provider, volumeMountPrefix)
 					Expect(volumeMounts).To(HaveLen(1))
 
 					expectedMountPath := ""
@@ -469,7 +469,7 @@ var _ = Describe("EtcdCopyBackupsTaskController", func() {
 					switch provider {
 					case druidstore.Local:
 						expectedMountName = volumeMountPrefix + "host-storage"
-						expectedMountPath = *storeSpec.Container
+						expectedMountPath = "/home/nonroot/" + *storeSpec.Container
 					case druidstore.GCS:
 						expectedMountName = volumeMountPrefix + common.VolumeNameProviderBackupSecret
 						expectedMountPath = getGCSSecretVolumeMountPathWithPrefixAndSuffix(volumeMountPrefix, "/")
@@ -766,7 +766,7 @@ func matchJob(task *druidv1alpha1.EtcdCopyBackupsTask, imageVector imagevector.I
 					"Containers": MatchAllElements(testutils.ContainerIterator, Elements{
 						"copy-backups": MatchFields(IgnoreExtras, Fields{
 							"Name":            Equal("copy-backups"),
-							"Image":           Equal(fmt.Sprintf("%s:%s", backupRestoreImage.Repository, *backupRestoreImage.Tag)),
+							"Image":           Equal(fmt.Sprintf("%s:%s", *backupRestoreImage.Repository, *backupRestoreImage.Tag)),
 							"ImagePullPolicy": Equal(corev1.PullIfNotPresent),
 							"Args":            MatchAllElements(testutils.CmdIterator, getArgElements(task, sourceProvider, targetProvider)),
 							"Env":             MatchElements(testutils.EnvIterator, IgnoreExtras, getEnvElements(task)),
