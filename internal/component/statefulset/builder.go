@@ -234,6 +234,28 @@ func (b *stsBuilder) getVolumeClaimTemplates() []corev1.PersistentVolumeClaim {
 		},
 	}
 
+	if b.etcd.IsBackupStoreEnabled() && b.provider != nil && *b.provider == druidstore.Local {
+        backupPVC := corev1.PersistentVolumeClaim{
+            ObjectMeta: metav1.ObjectMeta{
+                Name: common.VolumeNameLocalBackup,
+            },
+            Spec: corev1.PersistentVolumeClaimSpec{
+                AccessModes: []corev1.PersistentVolumeAccessMode{
+                    corev1.ReadWriteOnce,
+                },
+                Resources: corev1.VolumeResourceRequirements{
+                    Requests: corev1.ResourceList{
+                        corev1.ResourceStorage: ptr.Deref(b.etcd.Spec.StorageCapacity, defaultStorageCapacity),
+                    },
+                },
+            },
+        }
+		if storageClassName != "" {
+			backupPVC.Spec.StorageClassName = &storageClassName
+		}	
+		pvcClaim = append(pvcClaim, backupPVC)
+	}
+
 	if storageClassName != "" {
 		pvcClaim[0].Spec.StorageClassName = &storageClassName
 	}
@@ -243,26 +265,26 @@ func (b *stsBuilder) getVolumeClaimTemplates() []corev1.PersistentVolumeClaim {
 
 func (b *stsBuilder) getPodInitContainers() []corev1.Container {
 	initContainers := make([]corev1.Container, 0, 1)
-	if b.etcd.IsBackupStoreEnabled() {
-		if b.provider != nil && *b.provider == druidstore.Local {
-			etcdBackupVolumeMount := b.getEtcdBackupVolumeMount()
-			if etcdBackupVolumeMount != nil {
-				initContainers = append(initContainers, corev1.Container{
-					Name:            common.InitContainerNameChangeBackupBucketPermissions,
-					Image:           b.initContainerImage,
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Command:         []string{"sh", "-c", "--"},
-					Args:            []string{fmt.Sprintf("chown -R %d:%d /home/nonroot/%s", nonRootUser, nonRootUser, *b.etcd.Spec.Backup.Store.Container)},
-					VolumeMounts:    []corev1.VolumeMount{*etcdBackupVolumeMount},
-					SecurityContext: &corev1.SecurityContext{
-						RunAsGroup:   ptr.To[int64](0),
-						RunAsNonRoot: ptr.To(false),
-						RunAsUser:    ptr.To[int64](0),
-					},
-				})
-			}
-		}
-	}
+	// if b.etcd.IsBackupStoreEnabled() {
+	// 	if b.provider != nil && *b.provider == druidstore.Local {
+	// 		etcdBackupVolumeMount := b.getEtcdBackupVolumeMount()
+	// 		if etcdBackupVolumeMount != nil {
+	// 			initContainers = append(initContainers, corev1.Container{
+	// 				Name:            common.InitContainerNameChangeBackupBucketPermissions,
+	// 				Image:           b.initContainerImage,
+	// 				ImagePullPolicy: corev1.PullIfNotPresent,
+	// 				Command:         []string{"sh", "-c", "--"},
+	// 				Args:            []string{fmt.Sprintf("chown -R %d:%d /home/nonroot/%s", nonRootUser, nonRootUser, *b.etcd.Spec.Backup.Store.Container)},
+	// 				VolumeMounts:    []corev1.VolumeMount{*etcdBackupVolumeMount},
+	// 				SecurityContext: &corev1.SecurityContext{
+	// 					RunAsGroup:   ptr.To[int64](0),
+	// 					RunAsNonRoot: ptr.To(false),
+	// 					RunAsUser:    ptr.To[int64](0),
+	// 				},
+	// 			})
+	// 		}
+	// 	}
+	// }
 	return initContainers
 }
 
@@ -318,7 +340,7 @@ func getBackupRestoreContainerSecretVolumeMounts(etcd *druidv1alpha1.Etcd) []cor
 
 	return secretVolumeMounts
 }
-
+// PVC name:
 func (b *stsBuilder) getEtcdBackupVolumeMount() *corev1.VolumeMount {
 	switch *b.provider {
 	case druidstore.Local:
@@ -802,21 +824,47 @@ func (b *stsBuilder) getBackupVolume(ctx component.OperatorContext) (*corev1.Vol
 	store := b.etcd.Spec.Backup.Store
 	switch *b.provider {
 	case druidstore.Local:
-		hostPath, err := druidstore.GetHostMountPathFromSecretRef(ctx, b.client, b.logger, store, b.etcd.GetNamespace())
-		if err != nil {
-			return nil, fmt.Errorf("error getting host mount path for etcd: %v Err: %w", druidv1alpha1.GetNamespaceName(b.etcd.ObjectMeta), err)
-		}
+		// hostPath, err := druidstore.GetHostMountPathFromSecretRef(ctx, b.client, b.logger, store, b.etcd.GetNamespace())
+		// if err != nil {
+		// 	return nil, fmt.Errorf("error getting host mount path for etcd: %v Err: %w", druidv1alpha1.GetNamespaceName(b.etcd.ObjectMeta), err)
+		// }
 
-		hpt := corev1.HostPathDirectory
+		// hpt := corev1.HostPathDirectoryOrCreate
+		// return &corev1.Volume{
+		// 	Name: common.VolumeNameLocalBackup,
+		// 	VolumeSource: corev1.VolumeSource{
+		// 		HostPath: &corev1.HostPathVolumeSource{
+		// 			Path: hostPath + "/" + ptr.Deref(store.Container, ""),
+		// 			Type: &hpt,
+		// 		},
+		// 	},
+		// }, nil
+
+
+		// using emptyDir instead of hostPath.
+		// return &corev1.Volume{
+		// 	Name: common.VolumeNameLocalBackup,
+		// 	VolumeSource: corev1.VolumeSource{
+		// 		// PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+		// 			EmptyDir: &corev1.EmptyDirVolumeSource{},
+					
+		// 			// ClaimName: ,	
+		// 		},
+		// 	}, nil
+		
+		// for local
+
 		return &corev1.Volume{
 			Name: common.VolumeNameLocalBackup,
 			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: hostPath + "/" + ptr.Deref(store.Container, ""),
-					Type: &hpt,
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					// ClaimName: ptr.Deref(b.etcd.Spec.VolumeClaimTemplate, b.etcd.Name),
+					ClaimName: common.VolumeNameLocalBackup,
 				},
 			},
 		}, nil
+
+
 	case druidstore.GCS, druidstore.S3, druidstore.OSS, druidstore.ABS, druidstore.Swift, druidstore.OCS:
 		if store.SecretRef == nil {
 			return nil, fmt.Errorf("etcd: %v, no secretRef configured for backup store", druidv1alpha1.GetNamespaceName(b.etcd.ObjectMeta))

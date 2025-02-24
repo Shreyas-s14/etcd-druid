@@ -438,17 +438,26 @@ func getVolumeNamePrefix(prefix string) string {
 func (r *Reconciler) createVolumesFromStore(ctx context.Context, store *druidv1alpha1.StoreSpec, namespace, provider, prefix string) (volumes []corev1.Volume, err error) {
 	switch provider {
 	case druidstore.Local:
-		hostPathDirectory := corev1.HostPathDirectory
-		hostPathPrefix, err := druidstore.GetHostMountPathFromSecretRef(ctx, r.Client, r.logger, store, namespace)
-		if err != nil {
-			return nil, err
-		}
+		// hostPathDirectory := corev1.HostPathDirectoryOrCreate
+		// hostPathPrefix, err := druidstore.GetHostMountPathFromSecretRef(ctx, r.Client, r.logger, store, namespace)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// volumes = append(volumes, corev1.Volume{
+		// 	Name: prefix + "host-storage",
+		// 	VolumeSource: corev1.VolumeSource{
+		// 		HostPath: &corev1.HostPathVolumeSource{
+		// 			Path: hostPathPrefix + "/" + *store.Container,
+		// 			Type: &hostPathDirectory,
+		// 		},
+		// 	},
+		// })
+
 		volumes = append(volumes, corev1.Volume{
-			Name: prefix + "host-storage",
+			Name: common.VolumeNameLocalBackup,
 			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: hostPathPrefix + "/" + *store.Container,
-					Type: &hostPathDirectory,
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: common.VolumeNameLocalBackup,
 				},
 			},
 		})

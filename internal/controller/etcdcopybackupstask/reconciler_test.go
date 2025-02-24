@@ -532,10 +532,13 @@ var _ = Describe("EtcdCopyBackupsTaskController", func() {
 				Expect(volumes).To(HaveLen(1))
 				Expect(volumes[0].Name).To(Equal("source-host-storage"))
 
-				hostPathVolumeSource := volumes[0].VolumeSource.HostPath
-				Expect(hostPathVolumeSource).NotTo(BeNil())
-				Expect(hostPathVolumeSource.Path).To(Equal("/test/hostPath/" + *store.Container))
-				Expect(*hostPathVolumeSource.Type).To(Equal(corev1.HostPathDirectory))
+				// hostPathVolumeSource := volumes[0].VolumeSource.HostPath
+				// Expect(hostPathVolumeSource).NotTo(BeNil())
+				// Expect(hostPathVolumeSource.Path).To(Equal("/test/hostPath/" + *store.Container))
+				// Expect(*hostPathVolumeSource.Type).To(Equal(corev1.HostPathDirectory))
+				localVolumeSource := volumes[0].VolumeSource.PersistentVolumeClaim
+				Expect(localVolumeSource).ToNot(BeNil())
+				Expect(localVolumeSource.ClaimName).To(Equal(common.VolumeNameLocalBackup))
 			})
 
 			It("should create the correct volumes when secret data hostPath is not set", func() {
@@ -547,10 +550,13 @@ var _ = Describe("EtcdCopyBackupsTaskController", func() {
 				Expect(volumes).To(HaveLen(1))
 				Expect(volumes[0].Name).To(Equal("source-host-storage"))
 
-				hostPathVolumeSource := volumes[0].VolumeSource.HostPath
-				Expect(hostPathVolumeSource).NotTo(BeNil())
-				Expect(hostPathVolumeSource.Path).To(Equal(druidstore.LocalProviderDefaultMountPath + "/" + *store.Container))
-				Expect(*hostPathVolumeSource.Type).To(Equal(corev1.HostPathDirectory))
+				// hostPathVolumeSource := volumes[0].VolumeSource.HostPath
+				// Expect(hostPathVolumeSource).NotTo(BeNil())
+				// Expect(hostPathVolumeSource.Path).To(Equal(druidstore.LocalProviderDefaultMountPath + "/" + *store.Container))
+				// Expect(*hostPathVolumeSource.Type).To(Equal(corev1.HostPathDirectory))
+				localVolumeSource := volumes[0].PersistentVolumeClaim
+				Expect(localVolumeSource).ToNot(BeNil())
+				Expect(localVolumeSource.ClaimName).To(Equal(common.VolumeNameLocalBackup))
 			})
 
 			It("should create the correct volumes when store.SecretRef is not referred", func() {
@@ -562,10 +568,13 @@ var _ = Describe("EtcdCopyBackupsTaskController", func() {
 				Expect(volumes).To(HaveLen(1))
 				Expect(volumes[0].Name).To(Equal("source-host-storage"))
 
-				hostPathVolumeSource := volumes[0].VolumeSource.HostPath
-				Expect(hostPathVolumeSource).NotTo(BeNil())
-				Expect(hostPathVolumeSource.Path).To(Equal(druidstore.LocalProviderDefaultMountPath + "/" + *store.Container))
-				Expect(*hostPathVolumeSource.Type).To(Equal(corev1.HostPathDirectory))
+				// hostPathVolumeSource := volumes[0].VolumeSource.HostPath
+				// Expect(hostPathVolumeSource).NotTo(BeNil())
+				// Expect(hostPathVolumeSource.Path).To(Equal(druidstore.LocalProviderDefaultMountPath + "/" + *store.Container))
+				// Expect(*hostPathVolumeSource.Type).To(Equal(corev1.HostPathDirectory))
+				localVolumeSource := volumes[0].PersistentVolumeClaim
+				Expect(localVolumeSource).ToNot(BeNil())
+				Expect(localVolumeSource.ClaimName).To(Equal(common.VolumeNameLocalBackup))
 			})
 		})
 

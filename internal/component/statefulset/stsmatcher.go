@@ -5,7 +5,6 @@
 package statefulset
 
 import (
-	"context"
 	"fmt"
 
 	druidv1alpha1 "github.com/gardener/etcd-druid/api/v1alpha1"
@@ -14,7 +13,6 @@ import (
 	"github.com/gardener/etcd-druid/internal/utils"
 	testutils "github.com/gardener/etcd-druid/test/utils"
 
-	"github.com/go-logr/logr"
 	gomegatypes "github.com/onsi/gomega/types"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -487,14 +485,19 @@ func (s StatefulSetMatcher) getBackupVolumeMatcher() gomegatypes.GomegaMatcher {
 	}
 	switch *s.provider {
 	case druidstore.Local:
-		hostPath, err := druidstore.GetHostMountPathFromSecretRef(context.Background(), s.cl, logr.Discard(), s.etcd.Spec.Backup.Store, s.etcd.Namespace)
-		s.g.Expect(err).ToNot(HaveOccurred())
+		// hostPath, err := druidstore.GetHostMountPathFromSecretRef(context.Background(), s.cl, logr.Discard(), s.etcd.Spec.Backup.Store, s.etcd.Namespace)
+		// s.g.Expect(err).ToNot(HaveOccurred())
 		return MatchFields(IgnoreExtras, Fields{
 			"Name": Equal(common.VolumeNameLocalBackup),
+			// "VolumeSource": MatchFields(IgnoreExtras, Fields{
+			// 	"HostPath": PointTo(MatchFields(IgnoreExtras, Fields{
+			// 		"Path": Equal(fmt.Sprintf("%s/%s", hostPath, ptr.Deref(s.etcd.Spec.Backup.Store.Container, ""))),
+			// 		"Type": PointTo(Equal(corev1.HostPathDirectoryOrCreate)),
+			// 	})),
+			// }),
 			"VolumeSource": MatchFields(IgnoreExtras, Fields{
-				"HostPath": PointTo(MatchFields(IgnoreExtras, Fields{
-					"Path": Equal(fmt.Sprintf("%s/%s", hostPath, ptr.Deref(s.etcd.Spec.Backup.Store.Container, ""))),
-					"Type": PointTo(Equal(corev1.HostPathDirectory)),
+				"PersistentVolumeClaim": PointTo(MatchFields(IgnoreExtras, Fields{
+					"ClaimName": Equal(common.VolumeNameLocalBackup),
 				})),
 			}),
 		})

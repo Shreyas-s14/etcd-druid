@@ -420,20 +420,31 @@ func getCompactionJobVolumes(ctx context.Context, cl client.Client, logger logr.
 	}
 	switch provider {
 	case "Local":
-		hostPath, err := druidstore.GetHostMountPathFromSecretRef(ctx, cl, logger, storeValues, etcd.Namespace)
-		if err != nil {
-			return vs, fmt.Errorf("could not determine host mount path for local provider")
-		}
+		// hostPath, err := druidstore.GetHostMountPathFromSecretRef(ctx, cl, logger, storeValues, etcd.Namespace)
+		// if err != nil {
+		// 	return vs, fmt.Errorf("could not determine host mount path for local provider")
+		// }
 
-		hpt := v1.HostPathDirectory
+		// hpt := v1.HostPathDirectoryOrCreate
+		// vs = append(vs, v1.Volume{
+		// 	Name: "host-storage",
+		// 	VolumeSource: v1.VolumeSource{
+		// 		HostPath: &v1.HostPathVolumeSource{
+		// 			Path: hostPath + "/" + ptr.Deref(storeValues.Container, ""),
+		// 			Type: &hpt,
+		// 		},
+		// 	},
+		// })
+
+		// Local is used:
 		vs = append(vs, v1.Volume{
-			Name: "host-storage",
+			Name: common.VolumeNameLocalBackup,
 			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: hostPath + "/" + ptr.Deref(storeValues.Container, ""),
-					Type: &hpt,
+				PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+					ClaimName: common.VolumeNameLocalBackup,
 				},
 			},
+
 		})
 	case druidstore.GCS, druidstore.S3, druidstore.OSS, druidstore.ABS, druidstore.Swift, druidstore.OCS:
 		if storeValues.SecretRef == nil {
