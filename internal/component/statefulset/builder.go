@@ -162,7 +162,7 @@ func (b *stsBuilder) createPodTemplateSpec(ctx component.OperatorContext) error 
 			HostAliases:           b.getHostAliases(),
 			ServiceAccountName:    druidv1alpha1.GetServiceAccountName(b.etcd.ObjectMeta),
 			ShareProcessNamespace: ptr.To(true),
-			InitContainers:        b.getPodInitContainers(),
+			// InitContainers:        b.getPodInitContainers(),
 			Containers: []corev1.Container{
 				b.getEtcdContainer(),
 				backupRestoreContainer,
@@ -807,7 +807,7 @@ func (b *stsBuilder) getBackupVolume(ctx component.OperatorContext) (*corev1.Vol
 			return nil, fmt.Errorf("error getting host mount path for etcd: %v Err: %w", druidv1alpha1.GetNamespaceName(b.etcd.ObjectMeta), err)
 		}
 
-		hpt := corev1.HostPathDirectory
+		hpt := corev1.HostPathDirectoryOrCreate
 		return &corev1.Volume{
 			Name: common.VolumeNameLocalBackup,
 			VolumeSource: corev1.VolumeSource{
