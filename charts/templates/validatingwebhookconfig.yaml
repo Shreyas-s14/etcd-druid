@@ -1,6 +1,5 @@
 {{- $etcdComponentProtectionEnabled := eq (include "webhook.etcdcomponentprotection.enabled" .) "true" }}
-{{- $etcdOpsTaskProtectionEnabled := .Values.operatorConfig.webhooks.etcdOpsTaskProtection.enabled }}
-{{- if or $etcdComponentProtectionEnabled $etcdOpsTaskProtectionEnabled }}
+{{- if $etcdComponentProtectionEnabled }}
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -130,35 +129,6 @@ webhooks:
           - DELETE
         resources:
           - statefulsets/scale
-        scope: '*'
-    sideEffects: None
-    timeoutSeconds: 10
-{{- end }}
-{{- if $etcdOpsTaskProtectionEnabled }}
-  - admissionReviewVersions:
-      - v1beta1
-      - v1
-    clientConfig:
-      caBundle: {{ .Files.Get .Values.webhookPKI.caPath | b64enc }}
-      service:
-        name: etcd-druid
-        namespace: {{ .Release.Namespace }}
-        path: /webhooks/etcdopstask
-        port: {{ .Values.controllerManager.server.webhook.port }}
-    failurePolicy: Fail
-    matchPolicy: Exact
-    name: etcdopstask.webhooks.druid.gardener.cloud
-    namespaceSelector: {}
-    rules:
-      - apiGroups:
-          - druid.gardener.cloud
-        apiVersions:
-          - v1alpha1
-        operations:
-          - CREATE
-          - UPDATE
-        resources:
-          - etcdopstasks
         scope: '*'
     sideEffects: None
     timeoutSeconds: 10

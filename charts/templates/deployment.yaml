@@ -1,5 +1,4 @@
 {{- $etcdComponentProtectionWebhookEnabled := eq (include "webhook.etcdcomponentprotection.enabled" .) "true" }}
-{{- $etcdOpsTaskProtectionWebhookEnabled := .Values.operatorConfig.webhooks.etcdOpsTaskProtection.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -90,7 +89,7 @@ spec:
         {{- end }}
         {{- end }}
         volumeMounts:
-        {{- if or $etcdComponentProtectionWebhookEnabled $etcdOpsTaskProtectionWebhookEnabled }}
+        {{- if $etcdComponentProtectionWebhookEnabled }}
           - mountPath: /etc/webhook-server-tls
             name: tls
             readOnly: true
@@ -121,7 +120,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-      {{- if or $etcdComponentProtectionWebhookEnabled $etcdOpsTaskProtectionWebhookEnabled }}
+      {{- if $etcdComponentProtectionWebhookEnabled }}
         - name: tls
           secret:
             defaultMode: 420

@@ -85,8 +85,6 @@ operatorConfig:
       enabled: false
       exemptServiceAccounts:
         - system:serviceaccount:kube-system:generic-garbage-collector
-    etcdOpsTaskProtection:
-      enabled: false
   featureGates: { }
   logConfiguration:
     logLevel: info
@@ -138,8 +136,6 @@ webhooks:
     enabled: false
     exemptServiceAccounts:
       - system:serviceaccount:kube-system:generic-garbage-collector
-  etcdOpsTaskProtection:
-    enabled: true
 
 serviceAccount:
   name: etcd-druid

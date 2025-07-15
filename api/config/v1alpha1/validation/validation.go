@@ -125,7 +125,6 @@ func validateSecretControllerConfiguration(secretControllerConfig druidconfigv1a
 func validateWebhookConfiguration(webhookConfig druidconfigv1alpha1.WebhookConfiguration, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateEtcdComponentProtectionWebhookConfiguration(webhookConfig.EtcdComponentProtection, fldPath.Child("etcdComponentProtection"))...)
-	allErrs = append(allErrs, validateEtcdOpsTaskWebhookConfiguration(webhookConfig.EtcdOpsTaskProtection, fldPath.Child("etcdOpsTask"))...)
 	return allErrs
 }
 
@@ -149,12 +148,6 @@ func validateEtcdComponentProtectionWebhookConfiguration(webhookConfig druidconf
 			allErrs = append(allErrs, field.Required(fldPath.Child("reconcilerServiceAccountFQDN"), "must not be empty"))
 		}
 	}
-	return allErrs
-}
-
-// validateEtcdOpsTaskWebhookConfiguration validates the EtcdOpsTaskWebhookConfiguration.
-func validateEtcdOpsTaskWebhookConfiguration(_ druidconfigv1alpha1.EtcdOpsTaskWebhookConfiguration, _ *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 	return allErrs
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gardener/etcd-druid/api/core/v1alpha1"
+	druidv1alpha1 "github.com/gardener/etcd-druid/api/core/v1alpha1"
 	ctrlutils "github.com/gardener/etcd-druid/internal/controller/utils"
 	"github.com/gardener/etcd-druid/internal/task"
 
@@ -43,7 +43,7 @@ func (r *Reconciler) ensureTaskFinalizer(ctx context.Context, taskObjKey client.
 	meta := &metav1.PartialObjectMetadata{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "EtcdOpsTask",
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+			APIVersion: druidv1alpha1.SchemeGroupVersion.String(),
 		},
 	}
 	meta.SetNamespace(taskObjKey.Namespace)
@@ -74,7 +74,7 @@ func (r *Reconciler) transitionToPendingState(ctx context.Context, taskObjKey cl
 	}
 	// Set the task state to Pending
 	// and update the LastTransitionTime.
-	if err := r.recordTaskState(ctx, taskObjKey, v1alpha1.TaskStatePending); err != nil {
+	if err := r.recordTaskState(ctx, taskObjKey, druidv1alpha1.TaskStatePending); err != nil {
 		return ctrlutils.ReconcileWithError(err)
 	}
 	return ctrlutils.ContinueReconcile()
@@ -91,10 +91,32 @@ func (r *Reconciler) admitTask(ctx context.Context, taskObjKey client.ObjectKey,
 	if err != nil {
 		return ctrlutils.ReconcileWithError(err)
 	}
-	if task.Status.State != nil && *task.Status.State != v1alpha1.TaskStatePending {
+	// check if there is a duplicate task present for the same etcd and same namespace:
+	// Filter based on state of the resource
+	var etcdOpsTaskList druidv1alpha1.EtcdOpsTaskList
+	if err = r.client.List(ctx, &etcdOpsTaskList, client.InNamespace(taskHandler.EtcdReference().Namespace)); err != nil {
+		// r.logger.Error(err, "Error listing etcdopstask.")
+		return ctrlutils.ReconcileWithError(err)
+	}
+
+	for _, existingTask := range etcdOpsTaskList.Items {
+		if existingTask.Spec.EtcdRef != nil && task.Spec.EtcdRef != nil &&
+			existingTask.Spec.EtcdRef.Name == task.Spec.EtcdRef.Name &&
+			existingTask.Spec.EtcdRef.Namespace == task.Spec.EtcdRef.Namespace {
+			if !existingTask.IsCompleted() && existingTask.Name != task.Name {
+				err := fmt.Errorf("duplicate EtcdOpsTask for etcd %s/%s is already in progress (task: %s)", existingTask.Spec.EtcdRef.Namespace, existingTask.Spec.EtcdRef.Name, existingTask.Name)
+				_ = r.recordLastError(ctx, taskObjKey, err)
+				_ = r.recordLastOperation(ctx, taskObjKey, druidv1alpha1.OperationPhaseAdmit, druidv1alpha1.OperationStateFailed, err.Error())
+				_ = r.recordTaskState(ctx, taskObjKey, druidv1alpha1.TaskStateRejected)
+				return ctrlutils.ReconcileAfter(task.GetTimeToExpiry(), "Duplicate task found, requeueing for cleanup")
+			}
+		}
+	}
+
+	if task.Status.State != nil && *task.Status.State != druidv1alpha1.TaskStatePending {
 		return ctrlutils.ContinueReconcile()
 	}
-	if err := r.recordLastOperation(ctx, taskObjKey, v1alpha1.OperationPhaseAdmit, v1alpha1.OperationStateInProgress, ""); err != nil {
+	if err := r.recordLastOperation(ctx, taskObjKey, druidv1alpha1.OperationPhaseAdmit, druidv1alpha1.OperationStateInProgress, ""); err != nil {
 		return ctrlutils.ReconcileWithError(err)
 	}
 	result := taskHandler.Admit(ctx)
@@ -123,10 +145,10 @@ func (r *Reconciler) admitTask(ctx context.Context, taskObjKey client.ObjectKey,
 		if err != nil {
 			return ctrlutils.ReconcileWithError(err)
 		}
-		if err := r.recordLastOperation(ctx, taskObjKey, v1alpha1.OperationPhaseAdmit, v1alpha1.OperationStateFailed, result.Description); err != nil {
+		if err := r.recordLastOperation(ctx, taskObjKey, druidv1alpha1.OperationPhaseAdmit, druidv1alpha1.OperationStateFailed, result.Description); err != nil {
 			return ctrlutils.ReconcileWithError(err)
 		}
-		if err := r.recordTaskState(ctx, taskObjKey, v1alpha1.TaskStateRejected); err != nil {
+		if err := r.recordTaskState(ctx, taskObjKey, druidv1alpha1.TaskStateRejected); err != nil {
 			return ctrlutils.ReconcileWithError(err)
 		}
 		return ctrlutils.ReconcileAfter(task.GetTimeToExpiry(), "Task failed to admit")
@@ -143,9 +165,9 @@ func (r *Reconciler) transitionToInProgressState(ctx context.Context, taskObjKey
 		return ctrlutils.ReconcileWithError(err)
 	}
 
-	if task.Status.State != nil && *task.Status.State == v1alpha1.TaskStatePending {
+	if task.Status.State != nil && *task.Status.State == druidv1alpha1.TaskStatePending {
 		logger.Info("Transitioning task state from Pending to InProgress")
-		if err := r.recordTaskState(ctx, taskObjKey, v1alpha1.TaskStateInProgress); err != nil {
+		if err := r.recordTaskState(ctx, taskObjKey, druidv1alpha1.TaskStateInProgress); err != nil {
 			logger.Error(err, "Failed to record task state as InProgress")
 			return ctrlutils.ReconcileWithError(err)
 		}
@@ -167,7 +189,7 @@ func (r *Reconciler) runTask(ctx context.Context, taskObjKey client.ObjectKey, t
 	if err != nil {
 		return ctrlutils.ReconcileWithError(err)
 	}
-	if err := r.recordLastOperation(ctx, taskObjKey, v1alpha1.OperationPhaseRunning, v1alpha1.OperationStateInProgress, ""); err != nil {
+	if err := r.recordLastOperation(ctx, taskObjKey, druidv1alpha1.OperationPhaseRunning, druidv1alpha1.OperationStateInProgress, ""); err != nil {
 		return ctrlutils.ReconcileWithError(err)
 	}
 	result := taskHandler.Run(ctx)
@@ -179,18 +201,18 @@ func (r *Reconciler) runTask(ctx context.Context, taskObjKey client.ObjectKey, t
 			if err != nil {
 				return ctrlutils.ReconcileWithError(err)
 			}
-			if err := r.recordLastOperation(ctx, taskObjKey, v1alpha1.OperationPhaseRunning, v1alpha1.OperationStateFailed, result.Description); err != nil {
+			if err := r.recordLastOperation(ctx, taskObjKey, druidv1alpha1.OperationPhaseRunning, druidv1alpha1.OperationStateFailed, result.Description); err != nil {
 				return ctrlutils.ReconcileWithError(err)
 			}
-			if err := r.recordTaskState(ctx, taskObjKey, v1alpha1.TaskStateFailed); err != nil {
+			if err := r.recordTaskState(ctx, taskObjKey, druidv1alpha1.TaskStateFailed); err != nil {
 				return ctrlutils.ReconcileWithError(err)
 			}
 		} else {
 			// Task succeeded
-			if err := r.recordLastOperation(ctx, taskObjKey, v1alpha1.OperationPhaseRunning, v1alpha1.OperationStateCompleted, result.Description); err != nil {
+			if err := r.recordLastOperation(ctx, taskObjKey, druidv1alpha1.OperationPhaseRunning, druidv1alpha1.OperationStateCompleted, result.Description); err != nil {
 				return ctrlutils.ReconcileWithError(err)
 			}
-			if err := r.recordTaskState(ctx, taskObjKey, v1alpha1.TaskStateSucceeded); err != nil {
+			if err := r.recordTaskState(ctx, taskObjKey, druidv1alpha1.TaskStateSucceeded); err != nil {
 				return ctrlutils.ReconcileWithError(err)
 			}
 		}

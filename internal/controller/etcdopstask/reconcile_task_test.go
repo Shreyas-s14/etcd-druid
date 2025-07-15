@@ -4,21 +4,17 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	// "time"
 
 	druidv1alpha1 "github.com/gardener/etcd-druid/api/core/v1alpha1"
-
 	ctrlutils "github.com/gardener/etcd-druid/internal/controller/utils"
 	"github.com/gardener/etcd-druid/internal/task"
 	testutils "github.com/gardener/etcd-druid/test/utils"
 
-	. "github.com/onsi/gomega"
-	// v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	// "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-)
 
+	. "github.com/onsi/gomega"
+)
 
 // TestEnsureFinalizer tests the ensureTaskFinalizer step function
 func TestEnsureFinalizer(t *testing.T) {
@@ -119,8 +115,9 @@ func TestTransitionToPendingState(t *testing.T) {
 		})
 	}
 }
+
 // Cases :
-// 1) If the 
+// 1) If the
 // func TestAdmitTask(t *testing.T) {
 // 	g := NewGomegaWithT(t)
 // 	scheme := runtime.NewScheme()
@@ -133,9 +130,11 @@ func TestTransitionToPendingState(t *testing.T) {
 // 		expectedLastOperation *druidv1alpha1.EtcdOpsLastOperation
 // 		expectedState *druidv1alpha1.OperationState
 // 	}{
-
+// 		{
+// 			name: "Duplicate task with same etcdRef and OnDemandSnapshot config",
+// 		}
 // 	}
-	
+
 // }
 
 func TestTransitionToInProgressState(t *testing.T) {

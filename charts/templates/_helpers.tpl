@@ -67,8 +67,6 @@ config.yaml: |
         namespace: {{ .Release.Namespace }}
       exemptServiceAccounts:
       {{- toYaml .Values.operatorConfig.webhooks.etcdComponentProtection.exemptServiceAccounts | nindent 8}}
-    etcdOpsTaskProtection:
-      enabled: {{ .Values.operatorConfig.webhooks.etcdOpsTaskProtection.enabled }}
 {{- with .Values.featureGates }}
   featureGates:
   {{- toYaml . | nindent 4 }}
